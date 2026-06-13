@@ -16,8 +16,8 @@
 .sub{margin-top:10px;max-width:760px;color:var(--muted);font-size:14px;line-height:1.6}
 .stats{display:flex;gap:30px;flex-wrap:wrap;justify-content:flex-end}.stat b{display:block;color:var(--accent);font-size:22px;font-weight:900;line-height:1}.stat span{display:block;text-transform:uppercase;letter-spacing:.16em;font-size:10px;color:var(--muted);margin-top:4px}
 .pills{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 24px}.pill{padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.02);font-size:12px;color:#d4d9e3}
-.main{display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start}
-.side{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);padding:12px;box-shadow:var(--shadow);position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.main{display:grid;grid-template-columns:260px 1fr;gap:14px;align-items:start}
+.side{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);padding:12px;box-shadow:var(--shadow);overflow:auto}
 .sideTitle{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#98a2b3;margin:4px 0 10px;display:flex;align-items:center;gap:8px}.sideTitle:before{content:'🗓️'}
 .dayBtn{width:100%;padding:10px 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);text-align:left;margin-bottom:8px;cursor:pointer;box-shadow:var(--shadow)}
 .dayBtn.sel{outline:2px solid rgba(46,230,168,.7)}.dayBtn.has{border-color:rgba(46,230,168,.22)}.dayTop{display:flex;justify-content:space-between;gap:10px;align-items:center}.dayTop .date{font-weight:800;font-size:14px}.dayTop .tag{font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(46,230,168,.08);border:1px solid rgba(46,230,168,.18);color:#63f1bf;white-space:nowrap}
@@ -25,7 +25,7 @@
 .content{min-width:0}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow)}
 .bar .title{font-size:15px;font-weight:800}.bar .meta{font-size:12px;color:var(--muted)}.bar .tag{font-size:11px;padding:5px 9px;border-radius:999px;background:rgba(46,230,168,.08);border:1px solid rgba(46,230,168,.18);color:#63f1bf}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;align-items:stretch}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;align-items:stretch;min-height:340px}
 .card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.015));overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:330px}
 .cardTop{padding:12px 12px 10px;border-top:2px solid rgba(46,230,168,.8)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.lb{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#71efbb;font-weight:900}.st{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#f2b34c;font-weight:900}
@@ -175,8 +175,24 @@ const stats = {'México':[1.7,0.8],'Sudáfrica':[1.0,1.1],'República de Corea':
 function fact(n){let r=1;for(let i=2;i<=n;i++)r*=i;return r}
 function pois(k,l){return Math.pow(l,k)*Math.exp(-l)/fact(k)}
 function model(home,away){const h=stats[home]||[1.4,1.0], a=stats[away]||[1.2,1.2]; const xH=Math.max(0.25,1.05*(h[0]*0.72+a[1]*0.42)); const xA=Math.max(0.25,1.05*(a[0]*0.72+h[1]*0.42)); const rho=-0.08; let pH=0,pD=0,pA=0,pBTTS=0,pO25=0; const dc=(i,j)=>(i===0&&j===0)?1-(xH*xA*rho):(i===0&&j===1)?1+xH*rho:(i===1&&j===0)?1+xA*rho:(i===1&&j===1)?1-rho:1; const scores=[]; for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){let p=pois(i,xH)*pois(j,xA)*dc(i,j); if(i>j)pH+=p; else if(i===j)pD+=p; else pA+=p; if(i>0&&j>0)pBTTS+=p; if(i+j>=3)pO25+=p; scores.push({s:`${i}-${j}`,p});} scores.sort((a,b)=>b.p-a.p); const mx=Math.max(pH,pD,pA); let pick,conf,note; if(mx===pH){pick=`${home} ML`; conf=Math.min(90,Math.round(pH*100)); note=`${home} llega mejor por xG (${xH.toFixed(2)} vs ${xA.toFixed(2)}).`} else if(mx===pA){pick=`${away} ML`; conf=Math.min(90,Math.round(pA*100)); note=`${away} muestra mejor balance ofensivo/defensivo.`} else {pick='Empate'; conf=Math.min(84,Math.round(pD*100)); note='Dixon-Coles sube un poco el peso de marcadores cerrados.'} const alt=pBTTS>0.53?'Ambos anotan':(pO25>0.54?'Over 2.5':'Under 2.5'); const altP=Math.round(Math.max(pBTTS,pO25,1-pO25)*100); return {pick,conf,note,xH,xA,top:scores.slice(0,3),alt,altP}; }
-function render(date){ const d=new Date(date+'T12:00:00'); document.getElementById('dateTitle').textContent=`${d.toLocaleString('es',{weekday:'long'})} ${d.getDate()} de ${d.toLocaleString('es',{month:'long'})} ${d.getFullYear()}`; const fs=schedule[date]||[]; document.getElementById('dateMeta').textContent=`${fs.length} partidos · Copa del Mundo 2026`; document.getElementById('phaseTag').textContent=fs.length?`Grupo ${fs[0].group}`:'Sin partidos'; const g=document.getElementById('games'); g.innerHTML=''; if(!fs.length){ g.innerHTML='<div class="empty">No hay partidos para esta fecha.</div>'; return; } fs.forEach(f=>{ const m=model(f.home,f.away); const c=document.createElement('div'); c.className='card'; c.innerHTML=`<div class="cardTop"><div class="row"><div class="lb">Grupo ${f.group}</div><div class="st">${f.time||'Horario'}</div></div><div class="match">${f.home} vs ${f.away}</div><div class="info">${f.venue}</div></div><div class="pick"><div class="lab">Pick IA · Poisson/DC</div><div class="val"><div class="team">${m.pick}</div></div><div class="conf"><div class="barTrack"><div class="fill" style="width:${m.conf}%"></div></div><div class="pct">${m.conf}%</div></div></div><div class="analysis"><b>Claude style analysis</b><br>xG ${m.xH.toFixed(2)} vs ${m.xA.toFixed(2)}. ${m.note}<br><br>Marcador más probable ${m.top[0].s} (${m.top[0].p.toFixed(1)}%)<br>Top 3: ${m.top.map(x=>x.s+' '+x.p.toFixed(1)+'%').join(' | ')}<br>Alternativa: ${m.alt} (${m.altP}%)</div>`; g.appendChild(c); }); }
-function buildCalendar(){ const cal=document.getElementById('calendar'); cal.innerHTML=''; Object.keys(schedule).forEach((date,i)=>{ const d=new Date(date+'T12:00:00'); const b=document.createElement('button'); b.type='button'; b.className='dayBtn has'+(i===0?' sel':''); b.innerHTML=`<div class='dayTop'><div class='date'>${d.getDate()} ${d.toLocaleString('es',{month:'short'})}</div><div class='tag'>${schedule[date].length} part.</div></div><div class='dayMeta'>${d.toLocaleString('es',{weekday:'short'})} · ${date}</div>`; b.onclick=()=>{ document.querySelectorAll('.dayBtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); render(date); }; cal.appendChild(b); }); }
+function render(date){
+ const d=new Date(date+'T12:00:00');
+ document.getElementById('dateTitle').textContent=`${d.toLocaleString('es',{weekday:'long'})} ${d.getDate()} de ${d.toLocaleString('es',{month:'long'})} ${d.getFullYear()}`;
+ const fs=schedule[date]||[];
+ document.getElementById('dateMeta').textContent=`${fs.length} partidos · Copa del Mundo 2026`;
+ document.getElementById('phaseTag').textContent=fs.length?`Grupo ${fs[0].group}`:'Sin partidos';
+ const g=document.getElementById('games');
+ g.innerHTML='';
+ if(!fs.length){g.innerHTML='<div class="empty">No hay partidos para esta fecha.</div>'; return;}
+ fs.forEach(f=>{
+   const m=model(f.home,f.away);
+   const c=document.createElement('div');
+   c.className='card';
+   c.innerHTML=`<div class="cardTop"><div class="row"><div class="lb">Grupo ${f.group}</div><div class="st">${f.time||'Horario'}</div></div><div class="match">${f.home} vs ${f.away}</div><div class="info">${f.venue}</div></div><div class="pick"><div class="lab">Pick IA · Poisson/DC</div><div class="val"><div class="team">${m.pick}</div></div><div class="conf"><div class="barTrack"><div class="fill" style="width:${m.conf}%"></div></div><div class="pct">${m.conf}%</div></div></div><div class="analysis"><b>Claude style analysis</b><br>xG ${m.xH.toFixed(2)} vs ${m.xA.toFixed(2)}. ${m.note}<br><br>Marcador más probable ${m.top[0].s} (${m.top[0].p.toFixed(1)}%)<br>Top 3: ${m.top.map(x=>x.s+' '+x.p.toFixed(1)+'%').join(' | ')}<br>Alternativa: ${m.alt} (${m.altP}%)</div>`;
+   g.appendChild(c);
+ });
+}
+function buildCalendar(){ const cal=document.getElementById('calendar'); cal.innerHTML=''; Object.keys(schedule).forEach((date,i)=>{ const d=new Date(date+'T12:00:00'); const b=document.createElement('button'); b.style.display='block'; b.type='button'; b.className='dayBtn has'+(i===0?' sel':''); b.innerHTML=`<div class='dayTop'><div class='date'>${d.getDate()} ${d.toLocaleString('es',{month:'short'})}</div><div class='tag'>${schedule[date].length} part.</div></div><div class='dayMeta'>${d.toLocaleString('es',{weekday:'short'})} · ${date}</div>`; b.onclick=()=>{ document.querySelectorAll('.dayBtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); render(date); }; cal.appendChild(b); }); }
 buildCalendar(); document.getElementById('tot').textContent=Object.values(schedule).flat().length; render('2026-06-11');
 </script>
 </body>
