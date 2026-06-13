@@ -197,7 +197,7 @@ const h=stats[home]||[1.4,1.0], a=stats[away]||[1.2,1.2];
 const xH=Math.max(0.25,1.05*(h[0]*0.72+a[1]*0.42));
 const xA=Math.max(0.25,1.05*(a[0]*0.72+h[1]*0.42));
 const rho=-0.08;
-let pH=0,pD=0,pA=0,pBTTS=0,pO25=0;
+let pH=0,pD=0,pA=0,pBTTS=0,pO25=0,pU25=0,pO95C=0,pU95C=0;
 const dc=(i,j)=>(i===0&&j===0)?1-(xH*xA*rho):(i===0&&j===1)?1+xH*rho:(i===1&&j===0)?1+xA*rho:(i===1&&j===1)?1-rho:1;
 const scores=[];
 for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){
@@ -205,20 +205,30 @@ for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){
   if(i>j)pH+=p; else if(i===j)pD+=p; else pA+=p;
   if(i>0&&j>0)pBTTS+=p;
   if(i+j>=3)pO25+=p;
+  if(i+j<=2)pU25+=p;
+  if(i+j>=10)pO95C+=p;
+  if(i+j<=9)pU95C+=p;
   scores.push({s:`${i}-${j}`,p});
 }
 scores.sort((a,b)=>b.p-a.p);
-const mx=Math.max(pH,pD,pA);
-let pick,conf,note;
-if(mx===pH){pick=pH>0.68?`${home} ML`:`${home} o empate`; conf=Math.min(90,Math.round(pH*100)); note=`${home} llega mejor por xG (${xH.toFixed(2)} vs ${xA.toFixed(2)}).`}
-else if(mx===pA){pick=pA>0.68?`${away} ML`:`${away} o empate`; conf=Math.min(90,Math.round(pA*100)); note=`${away} muestra mejor balance ofensivo/defensivo.`}
-else {pick=pD>0.30?'Empate':'Ambos anotan NO'; conf=Math.min(84,Math.round(pD*100)); note='Dixon-Coles sube un poco el peso de marcadores cerrados.'}
-const goalPick = pO25>0.58 ? 'Más de 2.5 goles' : (pO25<0.42 ? 'Menos de 2.5 goles' : 'Rango medio de goles');
+const markets = [];
+markets.push({t:'Ambos anotan SI', p:pBTTS});
+markets.push({t:'Ambos anotan NO', p:1-pBTTS});
+markets.push({t:'Más de 2.5 goles', p:pO25});
+markets.push({t:'Menos de 2.5 goles', p:pU25});
+markets.push({t:'Más de 9.5 corners', p:pO95C});
+markets.push({t:'Menos de 9.5 corners', p:pU95C});
+markets.push({t:pH>=pA && pH>=pD ? `${home} ML` : pA>=pH && pA>=pD ? `${away} ML` : 'Empate', p:Math.max(pH,pA,pD)});
+markets.push({t:pD>0.27 ? 'Equipo/Empate' : 'Equipo/Empate', p:Math.max(pH,pA)+pD});
+markets.sort((a,b)=>b.p-a.p);
+let pick = markets[0].t;
+if(markets[0].t==='Empate') pick='Equipo/Empate';
+if(markets[0].t.includes('ML') && markets[0].p<0.60) pick = markets[0].t.replace(' ML',' o empate');
+const conf=Math.min(92,Math.round(markets[0].p*100));
+const goalPick = pO25>0.58 ? 'Más de 2.5 goles' : (pU25>0.58 ? 'Menos de 2.5 goles' : 'Rango medio de goles');
 const bttsPick = pBTTS>0.56 ? 'Ambos anotan SI' : 'Ambos anotan NO';
-const cornerPick = (xH+xA)>=3.2 ? 'Más de 9.5 corners' : ((xH+xA)<=2.0 ? 'Menos de 9.5 corners' : 'Rango medio de corners');
-const alt = pBTTS>0.53 ? 'Ambos anotan' : (pO25>0.54 ? 'Over 2.5' : 'Under 2.5');
-const altP = Math.round(Math.max(pBTTS,pO25,1-pO25)*100);
-return {pick,conf,note,xH,xA,top:scores.slice(0,3),alt,altP,goalPick,bttsPick,cornerPick,pH,pD,pA,pBTTS,pO25};
+const cornerPick = pO95C>0.53 ? 'Más de 9.5 corners' : 'Menos de 9.5 corners';
+return {pick,conf,xH,xA,top:scores.slice(0,3),goalPick,bttsPick,cornerPick,pH,pD,pA,pBTTS,pO25,pU25};
 }
 function render(date){
  const d=new Date(date+'T12:00:00');
