@@ -192,7 +192,34 @@ function rangeTextCards(total, gap){
   if(total >= 3.0) return '3 a 5 tarjetas';
   return '3 a 4 tarjetas';
 }
-function model(home,away){const h=stats[home]||[1.4,1.0], a=stats[away]||[1.2,1.2]; const xH=Math.max(0.25,1.05*(h[0]*0.72+a[1]*0.42)); const xA=Math.max(0.25,1.05*(a[0]*0.72+h[1]*0.42)); const rho=-0.08; let pH=0,pD=0,pA=0,pBTTS=0,pO25=0; const dc=(i,j)=>(i===0&&j===0)?1-(xH*xA*rho):(i===0&&j===1)?1+xH*rho:(i===1&&j===0)?1+xA*rho:(i===1&&j===1)?1-rho:1; const scores=[]; for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){let p=pois(i,xH)*pois(j,xA)*dc(i,j); if(i>j)pH+=p; else if(i===j)pD+=p; else pA+=p; if(i>0&&j>0)pBTTS+=p; if(i+j>=3)pO25+=p; scores.push({s:`${i}-${j}`,p});} scores.sort((a,b)=>b.p-a.p); const mx=Math.max(pH,pD,pA); let pick,conf,note; if(mx===pH){pick=`${home} ML`; conf=Math.min(90,Math.round(pH*100)); note=`${home} llega mejor por xG (${xH.toFixed(2)} vs ${xA.toFixed(2)}).`} else if(mx===pA){pick=`${away} ML`; conf=Math.min(90,Math.round(pA*100)); note=`${away} muestra mejor balance ofensivo/defensivo.`} else {pick='Empate'; conf=Math.min(84,Math.round(pD*100)); note='Dixon-Coles sube un poco el peso de marcadores cerrados.'} const alt=pBTTS>0.53?'Ambos anotan':(pO25>0.54?'Over 2.5':'Under 2.5'); const altP=Math.round(Math.max(pBTTS,pO25,1-pO25)*100); return {pick,conf,note,xH,xA,top:scores.slice(0,3),alt,altP}; }
+function model(home,away){
+const h=stats[home]||[1.4,1.0], a=stats[away]||[1.2,1.2];
+const xH=Math.max(0.25,1.05*(h[0]*0.72+a[1]*0.42));
+const xA=Math.max(0.25,1.05*(a[0]*0.72+h[1]*0.42));
+const rho=-0.08;
+let pH=0,pD=0,pA=0,pBTTS=0,pO25=0;
+const dc=(i,j)=>(i===0&&j===0)?1-(xH*xA*rho):(i===0&&j===1)?1+xH*rho:(i===1&&j===0)?1+xA*rho:(i===1&&j===1)?1-rho:1;
+const scores=[];
+for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){
+  let p=pois(i,xH)*pois(j,xA)*dc(i,j);
+  if(i>j)pH+=p; else if(i===j)pD+=p; else pA+=p;
+  if(i>0&&j>0)pBTTS+=p;
+  if(i+j>=3)pO25+=p;
+  scores.push({s:`${i}-${j}`,p});
+}
+scores.sort((a,b)=>b.p-a.p);
+const mx=Math.max(pH,pD,pA);
+let pick,conf,note;
+if(mx===pH){pick=pH>0.68?`${home} ML`:`${home} o empate`; conf=Math.min(90,Math.round(pH*100)); note=`${home} llega mejor por xG (${xH.toFixed(2)} vs ${xA.toFixed(2)}).`}
+else if(mx===pA){pick=pA>0.68?`${away} ML`:`${away} o empate`; conf=Math.min(90,Math.round(pA*100)); note=`${away} muestra mejor balance ofensivo/defensivo.`}
+else {pick=pD>0.30?'Empate':'Ambos anotan NO'; conf=Math.min(84,Math.round(pD*100)); note='Dixon-Coles sube un poco el peso de marcadores cerrados.'}
+const goalPick = pO25>0.58 ? 'Más de 2.5 goles' : (pO25<0.42 ? 'Menos de 2.5 goles' : 'Rango medio de goles');
+const bttsPick = pBTTS>0.56 ? 'Ambos anotan SI' : 'Ambos anotan NO';
+const cornerPick = (xH+xA)>=3.2 ? 'Más de 9.5 corners' : ((xH+xA)<=2.0 ? 'Menos de 9.5 corners' : 'Rango medio de corners');
+const alt = pBTTS>0.53 ? 'Ambos anotan' : (pO25>0.54 ? 'Over 2.5' : 'Under 2.5');
+const altP = Math.round(Math.max(pBTTS,pO25,1-pO25)*100);
+return {pick,conf,note,xH,xA,top:scores.slice(0,3),alt,altP,goalPick,bttsPick,cornerPick,pH,pD,pA,pBTTS,pO25};
+}
 function render(date){
  const d=new Date(date+'T12:00:00');
  document.getElementById('dateTitle').textContent=`${d.toLocaleString('es',{weekday:'long'})} ${d.getDate()} de ${d.toLocaleString('es',{month:'long'})} ${d.getFullYear()}`;
@@ -211,12 +238,11 @@ function render(date){
    const [goalCount, goalMood] = rangeTextGoals(totalGoals);
    const cornersCount = rangeTextCorners(totalGoals, gap);
    const cardsCount = rangeTextCards(totalGoals, gap);
-   const scoreLine = m.top.map(x=>x.s).join(', ');
-   let lead = m.pick.includes(f.home) ? `${f.home} llega mejor al partido.` : m.pick.includes(f.away) ? `${f.away} aparece con ventaja en el cruce.` : 'El modelo ve un partido muy parejo y el empate gana peso.';
+      let lead = m.pick.includes(f.home) ? `${f.home} llega mejor al partido.` : m.pick.includes(f.away) ? `${f.away} aparece con ventaja en el cruce.` : 'El modelo ve un partido muy parejo y el empate gana peso.';
    let tempo = totalGoals >= 3.2 ? 'El ritmo esperado es alto y el partido puede romperse temprano.' : totalGoals <= 1.9 ? 'El ritmo esperado es más bajo y el encuentro puede trabarse por momentos.' : 'El partido se proyecta con ritmo intermedio y con tramos alternados de control.';
    let corners = gap >= 0.9 ? 'La diferencia de nivel empuja al rival a defender más atrás, así que los corners tienen sentido por la presión y los despejes.' : totalGoals >= 3.0 ? 'Con más volumen ofensivo, los ataques por banda y los centros pueden elevar los corners.' : 'El reparto de posesión sugiere una cifra de corners bastante equilibrada.';
    let cards = gap >= 0.9 ? 'La necesidad de cortar transiciones puede elevar las tarjetas, sobre todo si uno de los dos se ve obligado a defender en bloque bajo.' : 'La disciplina debería mantenerse en un rango moderado, aunque la tensión de un partido cerrado nunca desaparece.';
-   c.innerHTML=`<div class="cardTop"><div class="row"><div class="lb">Grupo ${f.group}</div><div class="st">${f.time||'Horario'}</div></div><div class="match">${f.home} vs ${f.away}</div><div class="info">${f.venue}</div></div><div class="pick"><div class="lab">Pick IA · Poisson/DC</div><div class="val"><div class="team">${m.pick}</div></div><div class="conf"><div class="barTrack"><div class="fill" style="width:${m.conf}%"></div></div><div class="pct">${m.conf}%</div></div></div><div class="analysis"><b>Claude style analysis</b><br>${lead} Con un xG de ${m.xH.toFixed(2)} contra ${m.xA.toFixed(2)}, el partido apunta a ${goalCount}, por lo que el escenario general es ${goalMood}. ${tempo} En corners, el modelo se mueve en ${cornersCount}, mientras que en tarjetas la proyección queda en ${cardsCount}. ${corners} ${cards}<br><br>Marcadores más probables: ${scoreLine}. El más fuerte es ${m.top[0].s} (${m.top[0].p.toFixed(1)}%), seguido de ${m.top[1].s} (${m.top[1].p.toFixed(1)}%) y ${m.top[2].s} (${m.top[2].p.toFixed(1)}%).</div>`;
+   c.innerHTML=`<div class="cardTop"><div class="row"><div class="lb">Grupo ${f.group}</div><div class="st">${f.time||'Horario'}</div></div><div class="match">${f.home} vs ${f.away}</div><div class="info">${f.venue}</div></div><div class="pick"><div class="lab">Pick IA · Poisson/DC</div><div class="val"><div class="team">${m.pick}</div></div><div class="conf"><div class="barTrack"><div class="fill" style="width:${m.conf}%"></div></div><div class="pct">${m.conf}%</div></div></div><div class="analysis"><b>Claude style analysis</b><br>${lead} Con un xG de ${m.xH.toFixed(2)} contra ${m.xA.toFixed(2)}, el partido apunta a ${goalCount}, por lo que el escenario general es ${goalMood}. ${tempo} En corners, el modelo se mueve en ${cornersCount}, mientras que en tarjetas la proyección queda en ${cardsCount}. ${corners} ${cards}<br><br>Picks sugeridos por el modelo: ${m.pick} · ${m.bttsPick} · ${m.goalPick} · ${m.cornerPick}.</div>`;
    g.appendChild(c);
  });
 }
