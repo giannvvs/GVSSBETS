@@ -117,5 +117,169 @@
 
   <div class="footer"><div>⚠️ Aviso: los picks son antes deportivos con fines informativos. No constituyen asesoramiento financiero. Las apuestas implican riesgo. Solo mayores de 18.</div><div>PickPro • Mundial 2026</div></div>
 </div>
+
+<script>
+(function(){
+  const teamStats = {
+    'Qatar': { gf: [0,1,0,2,1], ga: [2,1,3,1,2], w: 1, d: 1, l: 3 },
+    'Switzerland': { gf: [2,1,2,3,2], ga: [0,1,1,0,1], w: 3, d: 1, l: 1 },
+    'Brazil': { gf: [3,2,1,4,2], ga: [0,1,1,0,1], w: 4, d: 0, l: 1 },
+    'Morocco': { gf: [1,2,1,1,0], ga: [0,1,1,0,1], w: 2, d: 1, l: 2 },
+    'Haiti': { gf: [0,1,1,0,1], ga: [2,2,1,3,2], w: 1, d: 1, l: 3 },
+    'Scotland': { gf: [1,2,1,2,1], ga: [1,1,0,1,0], w: 3, d: 1, l: 1 },
+    'Australia': { gf: [1,1,2,1,0], ga: [1,2,1,1,1], w: 1, d: 2, l: 2 },
+    'Turkey': { gf: [2,1,2,3,1], ga: [1,1,1,1,0], w: 3, d: 1, l: 1 },
+    'Mexico': { gf: [1,2,1,0,2], ga: [0,1,0,1,1], w: 3, d: 1, l: 1 },
+    'South Korea': { gf: [1,1,2,1,1], ga: [1,1,1,0,1], w: 2, d: 2, l: 1 },
+    'South Africa': { gf: [1,0,2,1,1], ga: [1,1,1,2,0], w: 1, d: 2, l: 2 },
+    'Czechia': { gf: [1,2,1,1,2], ga: [0,1,1,1,0], w: 3, d: 1, l: 1 },
+    'Canada': { gf: [2,1,1,2,1], ga: [0,1,1,0,1], w: 3, d: 1, l: 1 },
+    'Bosnia & Herzegovina': { gf: [1,1,0,1,2], ga: [1,1,2,1,1], w: 1, d: 1, l: 3 },
+    'United States': { gf: [2,1,3,1,2], ga: [0,1,0,1,1], w: 4, d: 0, l: 1 },
+    'Paraguay': { gf: [1,1,1,2,1], ga: [1,0,1,1,1], w: 2, d: 2, l: 1 },
+    'Germany': { gf: [2,3,1,2,2], ga: [1,0,1,1,0], w: 4, d: 0, l: 1 },
+    'Ecuador': { gf: [1,1,1,2,1], ga: [0,1,1,0,1], w: 2, d: 2, l: 1 },
+    'Ivory Coast': { gf: [2,1,2,1,1], ga: [0,1,1,1,0], w: 3, d: 1, l: 1 },
+    'Curacao': { gf: [1,1,0,2,1], ga: [1,1,2,1,1], w: 1, d: 2, l: 2 },
+    'Netherlands': { gf: [2,2,3,1,2], ga: [0,1,1,0,1], w: 4, d: 1, l: 0 },
+    'Japan': { gf: [1,2,3,2,1], ga: [0,1,1,0,1], w: 4, d: 0, l: 1 },
+    'Tunisia': { gf: [1,0,1,1,0], ga: [0,1,0,1,1], w: 1, d: 2, l: 2 },
+    'Sweden': { gf: [1,1,2,1,1], ga: [1,1,1,1,0], w: 2, d: 2, l: 1 },
+    'Belgium': { gf: [2,2,1,3,2], ga: [0,1,1,0,1], w: 4, d: 0, l: 1 },
+    'Iran': { gf: [1,1,2,1,1], ga: [0,1,0,1,1], w: 3, d: 1, l: 1 },
+    'Egypt': { gf: [1,2,1,1,0], ga: [1,0,1,1,1], w: 2, d: 1, l: 2 },
+    'New Zealand': { gf: [1,0,1,2,1], ga: [1,1,2,1,1], w: 1, d: 1, l: 3 },
+    'Spain': { gf: [2,3,2,1,2], ga: [0,0,1,0,1], w: 4, d: 1, l: 0 },
+    'Uruguay': { gf: [1,2,1,2,1], ga: [0,1,0,1,1], w: 3, d: 1, l: 1 },
+    'Saudi Arabia': { gf: [1,1,2,0,1], ga: [1,1,1,2,0], w: 1, d: 2, l: 2 },
+    'Cape Verde': { gf: [1,0,1,1,1], ga: [1,1,1,0,1], w: 1, d: 2, l: 2 },
+    'France': { gf: [2,2,3,2,1], ga: [0,1,0,1,1], w: 4, d: 1, l: 0 },
+    'Senegal': { gf: [1,2,1,2,1], ga: [0,1,1,0,1], w: 3, d: 1, l: 1 },
+    'Norway': { gf: [2,1,2,1,2], ga: [1,1,1,1,0], w: 3, d: 1, l: 1 },
+    'Iraq': { gf: [1,1,0,2,1], ga: [1,1,1,1,1], w: 1, d: 2, l: 2 },
+    'Argentina': { gf: [2,3,2,1,2], ga: [0,0,1,0,1], w: 4, d: 1, l: 0 },
+    'Austria': { gf: [1,2,1,2,1], ga: [1,1,0,1,0], w: 3, d: 1, l: 1 },
+    'Algeria': { gf: [1,2,1,1,2], ga: [1,1,1,0,1], w: 2, d: 1, l: 2 },
+    'Jordan': { gf: [1,1,0,1,2], ga: [1,1,2,1,1], w: 1, d: 1, l: 3 },
+    'Portugal': { gf: [2,3,2,2,1], ga: [0,1,0,1,1], w: 4, d: 1, l: 0 },
+    'Colombia': { gf: [1,2,2,1,2], ga: [0,1,1,0,1], w: 3, d: 1, l: 1 },
+    'Uzbekistan': { gf: [1,1,2,0,1], ga: [1,1,1,1,0], w: 2, d: 1, l: 2 },
+    'Congo DR': { gf: [1,0,1,1,1], ga: [1,1,2,1,1], w: 1, d: 2, l: 2 },
+    'England': { gf: [2,2,1,3,2], ga: [0,1,0,1,1], w: 4, d: 1, l: 0 },
+    'Croatia': { gf: [1,1,2,1,2], ga: [0,1,1,1,0], w: 3, d: 1, l: 1 },
+    'Panama': { gf: [1,1,0,2,1], ga: [1,1,1,2,1], w: 1, d: 1, l: 3 },
+    'Ghana': { gf: [1,2,1,1,1], ga: [1,1,1,0,1], w: 2, d: 1, l: 2 }
+  };
+
+  const fixtures = {
+    '2026-06-13': [
+      { phase:'Fase de Grupos', group:'B', time:'13:00 CT', home:'Qatar', away:'Switzerland', venue:'Est. San Francisco' },
+      { phase:'Fase de Grupos', group:'C', time:'16:00 CT', home:'Brazil', away:'Morocco', venue:'Est. New York' },
+      { phase:'Fase de Grupos', group:'C', time:'19:00 CT', home:'Haiti', away:'Scotland', venue:'Est. Boston' },
+      { phase:'Fase de Grupos', group:'D', time:'22:00 CT', home:'Australia', away:'Turkey', venue:'BC Place Vancouver' },
+    ],
+    '2026-06-14': [
+      { phase:'Fase de Grupos', group:'A', time:'13:00 CT', home:'Mexico', away:'South Korea', venue:'Est. Mexico City' },
+      { phase:'Fase de Grupos', group:'A', time:'16:00 CT', home:'South Africa', away:'Czechia', venue:'Est. Toronto' },
+      { phase:'Fase de Grupos', group:'B', time:'19:00 CT', home:'Canada', away:'Bosnia & Herzegovina', venue:'Est. Vancouver' },
+      { phase:'Fase de Grupos', group:'D', time:'22:00 CT', home:'United States', away:'Paraguay', venue:'Est. Los Angeles' },
+    ],
+    '2026-06-15': [
+      { phase:'Fase de Grupos', group:'E', time:'13:00 CT', home:'Germany', away:'Ecuador', venue:'Est. Dallas' },
+      { phase:'Fase de Grupos', group:'E', time:'16:00 CT', home:'Ivory Coast', away:'Curacao', venue:'Est. Atlanta' },
+      { phase:'Fase de Grupos', group:'F', time:'19:00 CT', home:'Netherlands', away:'Japan', venue:'Est. Houston' },
+      { phase:'Fase de Grupos', group:'F', time:'22:00 CT', home:'Tunisia', away:'Sweden', venue:'Est. Seattle' },
+    ],
+  };
+
+  const teamLabels = { 'Turkey':'Turquía', 'Curacao':'Curaçao', 'Czechia':'Czechia', 'Bosnia & Herzegovina':'Bosnia', 'South Korea':'Corea del Sur', 'South Africa':'Sudáfrica', 'United States':'EE.UU.', 'Ivory Coast':'Costa de Marfil', 'Congo DR':'Congo DR', 'Saudi Arabia':'Arabia Saudita', 'Cape Verde':'Cabo Verde', 'New Zealand':'Nueva Zelanda' };
+
+  function avg(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+  function formText(t){ const s = teamStats[t]; if(!s) return '—'; return `${s.w}V-${s.d}E-${s.l}D`; }
+  function nextDateLabel(d){ const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']; return days[d.getDay()] + ' ' + d.getDate(); }
+  function phaseColor(phase){ return ({'Fase de Grupos':'#11c98f','Ronda de 32':'#4ea3ff','Octavos de Final':'#8a6cff','Cuartos de Final':'#f04f9a','Semifinales':'#ff9b3d','Tercer Lugar':'#ffd66c','Final':'#ffd66c'})[phase] || '#11c98f'; }
+  function shortName(name){ return teamLabels[name] || name; }
+
+  function predict(f){
+    const h = teamStats[f.home], a = teamStats[f.away];
+    const hg = avg(h.gf), ag = avg(a.gf), hga = avg(h.ga), aga = avg(a.ga);
+    const homeScore = (hg + (2-aga) + (h.w*0.15) - (h.l*0.08));
+    const awayScore = (ag + (2-hga) + (a.w*0.15) - (a.l*0.08));
+    let pick, conf, odds, rationale;
+    if(homeScore - awayScore >= 0.45){
+      pick = `${shortName(f.home)} Gana`;
+      conf = Math.min(89, Math.round(61 + (homeScore-awayScore)*18 + h.w*2));
+      odds = -Math.round(110 + conf*0.8);
+      rationale = `${shortName(f.home)} promedia ${hg.toFixed(1)} goles a favor en sus últimos 5 partidos y solo ${avg(h.ga).toFixed(1)} en contra. ${shortName(f.away)} llega más débil en forma reciente.`;
+    } else if(awayScore - homeScore >= 0.45){
+      pick = `${shortName(f.away)} Gana`;
+      conf = Math.min(89, Math.round(61 + (awayScore-homeScore)*18 + a.w*2));
+      odds = -Math.round(110 + conf*0.8);
+      rationale = `${shortName(f.away)} trae mejor forma en los últimos 5 (${formText(f.away)}) y más volumen ofensivo. ${shortName(f.home)} concede demasiado en sus últimos juegos.`;
+    } else {
+      pick = 'Menos de 2.5 goles';
+      conf = Math.min(84, Math.round(58 + Math.abs(homeScore-awayScore)*8));
+      odds = +120;
+      rationale = `Ambos equipos muestran tendencia al under: ${shortName(f.home)} promedia ${hg.toFixed(1)} GF y ${shortName(f.away)} ${ag.toFixed(1)} GF en sus últimos 5. Partido cerrado y de marcador corto.`;
+    }
+    return { pick, conf, odds, rationale, hForm: formText(f.home), aForm: formText(f.away), hGF: hg.toFixed(1), aGF: ag.toFixed(1) };
+  }
+
+  function renderDate(dateStr){
+    const secbar = document.querySelector('.secbar');
+    const list = document.querySelector('.grid');
+    const tag = document.querySelector('.secbar .tag');
+    const fixturesDay = fixtures[dateStr] || [];
+    const d = new Date(dateStr + 'T12:00:00');
+    secbar.querySelector('.title').textContent = `${nextDateLabel(d)} ${d.getFullYear()}`;
+    secbar.querySelector('.meta').textContent = `${fixturesDay.length} partidos · Copa del Mundo 2026`;
+    tag.textContent = fixturesDay.length ? (fixturesDay[0].phase) : 'Sin partidos';
+    tag.style.background = fixturesDay.length ? 'rgba(34,224,165,.1)' : 'rgba(255,92,115,.1)';
+    tag.style.borderColor = fixturesDay.length ? 'rgba(34,224,165,.22)' : 'rgba(255,92,115,.22)';
+    tag.style.color = fixturesDay.length ? '#52e4ae' : '#ff92a3';
+    list.innerHTML = '';
+    if(!fixturesDay.length){
+      list.innerHTML = '<div class="card" style="grid-column:1/-1;min-height:160px;display:flex;align-items:center;justify-content:center"><div style="color:#8e96a6;font-size:14px">No hay partidos para esta fecha.</div></div>';
+      return;
+    }
+    fixturesDay.forEach(f => {
+      const p = predict(f);
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.dataset.date = dateStr;
+      el.dataset.group = f.group;
+      el.innerHTML = `
+        <div class="cardTop" style="border-top-color:${phaseColor(f.phase)}">
+          <div class="badgeRow"><div class="lb">${f.phase}</div><div class="st">Próximo</div></div>
+          <div class="match">${shortName(f.home)} vs ${shortName(f.away)}</div>
+          <div class="info">Grupo ${f.group} · ${f.time} · ${f.venue}</div>
+        </div>
+        <div class="pick">
+          <div class="lab">Pick generado por IA</div>
+          <div class="val"><div class="team">${p.pick}</div><div class="odds">${p.odds > 0 ? '+' : ''}${p.odds}</div></div>
+          <div class="conf"><div class="bar"><div class="fill" style="width:${p.conf}%"></div></div><div class="pct">${p.conf}%</div></div>
+        </div>
+        <div class="analysis"><b>+ ANÁLISIS IA</b><br>Últimos 5: ${shortName(f.home)} ${p.hForm} · ${shortName(f.away)} ${p.aForm}. ${p.rationale}</div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  function setActiveDay(btn){ document.querySelectorAll('.day').forEach(d => d.classList.remove('sel')); btn.classList.add('sel'); }
+  document.querySelectorAll('.day').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setActiveDay(btn);
+      const month = btn.closest('.cal').previousElementSibling.textContent.trim();
+      const day = btn.querySelector('.n').textContent.trim();
+      const dateStr = (month === 'Junio 2026' ? '2026-06-' : '2026-07-') + day.padStart(2, '0');
+      renderDate(dateStr);
+    });
+  });
+
+  // start on selected day: June 12
+  renderDate('2026-06-12');
+})();
+</script>
+
 </body>
 </html>
