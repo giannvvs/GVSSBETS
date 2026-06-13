@@ -197,7 +197,7 @@ const h=stats[home]||[1.4,1.0], a=stats[away]||[1.2,1.2];
 const xH=Math.max(0.25,1.05*(h[0]*0.72+a[1]*0.42));
 const xA=Math.max(0.25,1.05*(a[0]*0.72+h[1]*0.42));
 const rho=-0.08;
-let pH=0,pD=0,pA=0,pBTTS=0,pO25=0,pU25=0,pO95C=0,pU95C=0;
+let pH=0,pD=0,pA=0,pBTTS=0,pO25=0,pU25=0,pO35=0,pU35=0,pO95C=0,pU95C=0;
 const dc=(i,j)=>(i===0&&j===0)?1-(xH*xA*rho):(i===0&&j===1)?1+xH*rho:(i===1&&j===0)?1+xA*rho:(i===1&&j===1)?1-rho:1;
 const scores=[];
 for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){
@@ -206,35 +206,49 @@ for(let i=0;i<=6;i++) for(let j=0;j<=6;j++){
   if(i>0&&j>0)pBTTS+=p;
   if(i+j>=3)pO25+=p;
   if(i+j<=2)pU25+=p;
+  if(i+j>=4)pO35+=p;
+  if(i+j<=3)pU35+=p;
   if(i+j>=10)pO95C+=p;
   if(i+j<=9)pU95C+=p;
   scores.push({s:`${i}-${j}`,p});
 }
 scores.sort((a,b)=>b.p-a.p);
-const markets = [];
-markets.push({t:'Ambos anotan SI', p:pBTTS});
-markets.push({t:'Ambos anotan NO', p:1-pBTTS});
-markets.push({t:'Más de 2.5 goles', p:pO25});
-markets.push({t:'Menos de 2.5 goles', p:pU25});
-markets.push({t:'Más de 9.5 corners', p:pO95C});
-markets.push({t:'Menos de 9.5 corners', p:pU95C});
-markets.push({t:pH>=pA && pH>=pD ? `${home} ML` : pA>=pH && pA>=pD ? `${away} ML` : 'Empate', p:Math.max(pH,pA,pD)});
-markets.push({t:pD>0.27 ? 'Equipo/Empate' : 'Equipo/Empate', p:Math.max(pH,pA)+pD});
-markets.sort((a,b)=>b.p-a.p);
-let pick = markets[0].t;
-if(markets[0].t==='Empate') pick='Equipo/Empate';
-if(markets[0].t.includes('ML') && markets[0].p<0.60) pick = markets[0].t.replace(' ML',' o empate');
-if(markets[0].t==='Equipo/Empate' || markets[0].t==='Empate') pick='Equipo/Empate';
-if(pBTTS>0.60 && pBTTS>=Math.max(pH,pA,pD)) pick='Ambos anotan SI';
-if((1-pBTTS)>0.60 && (1-pBTTS)>=Math.max(pH,pA,pD)) pick='Ambos anotan NO';
-if(pO25>0.62 && pO25>=Math.max(pH,pA,pD,pBTTS)) pick='Más de 2.5 goles';
-if(pU25>0.62 && pU25>=Math.max(pH,pA,pD,pBTTS)) pick='Menos de 2.5 goles';
-if(pO95C>0.60 && pO95C>=Math.max(pH,pA,pD,pBTTS,pO25,pU25)) pick='Más de 9.5 corners';
-const conf=Math.min(92,Math.round(markets[0].p*100));
+const diff=xH-xA;
+const total=xH+xA;
+const cleanHome = Math.exp(-xA) * (1 + Math.min(0.15, Math.max(-0.05, diff*0.04)));
+const cleanAway = Math.exp(-xH) * (1 + Math.min(0.15, Math.max(-0.05, -diff*0.04)));
+const leanHome = pH + 0.35*pD;
+const leanAway = pA + 0.35*pD;
+const leanDraw = pD;
+let market = [
+  {t:'Ambos anotan SI', p:pBTTS, why:'Ambos equipos tienen vías razonables para generar ocasiones.'},
+  {t:'Ambos anotan NO', p:1-pBTTS, why:'Uno de los dos puede quedarse corto en producción ofensiva.'},
+  {t:'Más de 2.5 goles', p:pO25, why:'El ritmo esperado y la suma de xG favorecen un marcador más largo.'},
+  {t:'Menos de 2.5 goles', p:pU25, why:'El guion apunta a pocas ocasiones claras y control táctico.'},
+  {t:'Más de 3.5 goles', p:pO35, why:'Solo si el duelo se abre y aparecen goles tempranos.'},
+  {t:'Menos de 3.5 goles', p:pU35, why:'Más probable cuando el partido se mantiene ordenado.'},
+  {t:'Más de 9.5 corners', p:pO95C, why:'La amplitud y la presión por bandas pueden empujar el volumen de corners.'},
+  {t:'Menos de 9.5 corners', p:pU95C, why:'Un partido más directo o más cerrado puede dejar pocos saques de esquina.'},
+  {t:'Equipo/Empate', p:Math.max(leanHome,leanAway), why:'La combinación de superioridad y empate protegido suele ser la mejor lectura en cruces desbalanceados.'},
+  {t:`${home} gana`, p:leanHome, why:`${home} muestra mejor balance entre ataque y defensa.`},
+  {t:`${away} gana`, p:leanAway, why:`${away} tiene más peso ofensivo o mejor perfil defensivo.`},
+  {t:'Empate', p:leanDraw, why:'El equilibrio de fuerzas puede empujar al reparto de puntos.'}
+];
+market.sort((a,b)=>b.p-a.p);
+let pick = market[0].t;
+if(pick===`${home} gana` && pD>0.28) pick='Equipo/Empate';
+if(pick===`${away} gana` && pD>0.28) pick='Equipo/Empate';
+const conf=Math.min(92,Math.round(market[0].p*100));
 const goalPick = pO25>0.58 ? 'Más de 2.5 goles' : (pU25>0.58 ? 'Menos de 2.5 goles' : 'Rango medio de goles');
 const bttsPick = pBTTS>0.56 ? 'Ambos anotan SI' : 'Ambos anotan NO';
 const cornerPick = pO95C>0.53 ? 'Más de 9.5 corners' : 'Menos de 9.5 corners';
-return {pick,conf,xH,xA,top:scores.slice(0,3),goalPick,bttsPick,cornerPick,pH,pD,pA,pBTTS,pO25,pU25};
+const sheet = {
+  goals: total<=1.9 ? '1 o 2 goles' : total<=2.7 ? '2 goles' : total<=3.4 ? '2 o 3 goles' : '3 o 4 goles',
+  corners: total<=2.0 ? '7 a 10 corners' : total<=3.1 ? '8 a 11 corners' : '9 a 13 corners',
+  cards: diff>=0.9 ? '4 a 6 tarjetas' : total>=3.0 ? '3 a 5 tarjetas' : '3 a 4 tarjetas'
+};
+const reason = market[0].why + ' ' + (market[0].t.includes('Corners') ? '' : (total>=3.0 ? 'El intercambio de golpes eleva el techo de goles.' : 'El partido no parece suficientemente roto como para forzar un over extremo.'));
+return {pick,conf,xH,xA,top:scores.slice(0,3),goalPick,bttsPick,cornerPick,pH,pD,pA,pBTTS,pO25,pU25,sheet,reason,marketTop:market.slice(0,5)};
 }
 function render(date){
  const d=new Date(date+'T12:00:00');
